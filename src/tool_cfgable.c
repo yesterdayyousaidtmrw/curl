@@ -49,6 +49,9 @@ struct OperationConfig *config_alloc(void)
   config->proto_redir_present = FALSE;
   config->proto_default = NULL;
   config->tcp_nodelay = TRUE; /* enabled by default */
+  config->http3_ssl_permute_extensions =
+    CURL_HTTP3_SSL_PERMUTE_FALLBACK;
+  config->quic_initial_packet_number = 0L;
   config->happy_eyeballs_timeout_ms = CURL_HET_DEFAULT;
   config->http09_allowed = FALSE;
   config->ftp_skip_ip = TRUE;
@@ -100,6 +103,27 @@ static void free_config_fields(struct OperationConfig *config)
   curlx_safefree(config->proto_str);
   curlx_safefree(config->proto_redir_str);
 
+  /* curl-impersonate */
+  curlx_safefree(config->ssl_signature_algorithms);
+  curlx_safefree(config->ssl_cert_compression);
+  curlx_safefree(config->ws_ssl_cert_compression);
+  curlx_safefree(config->http_header_order);
+  curlx_safefree(config->http2_pseudo_headers_order);
+  curlx_safefree(config->http2_settings);
+  curlx_safefree(config->http2_streams);
+  curlx_safefree(config->http3_pseudo_headers_order);
+  curlx_safefree(config->http3_settings);
+  curlx_safefree(config->http3_http_header_order);
+  curlx_safefree(config->http3_ssl_ec_curves);
+  curlx_safefree(config->http3_sig_hash_algs);
+  curlx_safefree(config->http3_tls_extension_order);
+  curlx_safefree(config->quic_cid_length);
+  curlx_safefree(config->quic_transport_parameters);
+  curlx_safefree(config->ws_http_header_order);
+  curlx_safefree(config->tls_extension_order);
+  curlx_safefree(config->tls_trust_anchors);
+  curlx_safefree(config->impersonate);
+
   urlnode = config->url_list;
   while(urlnode) {
     struct getout *next = urlnode->next;
@@ -150,7 +174,7 @@ static void free_config_fields(struct OperationConfig *config)
   curlx_safefree(config->etag_save_file);
   curlx_safefree(config->etag_compare_file);
   curlx_safefree(config->ssl_ec_curves);
-  curlx_safefree(config->ssl_signature_algorithms);
+  curlx_safefree(config->form_boundary);
   curlx_safefree(config->request_target);
   curlx_safefree(config->customrequest);
   curlx_safefree(config->krblevel);
@@ -166,6 +190,8 @@ static void free_config_fields(struct OperationConfig *config)
   curl_slist_free_all(config->prequote);
 
   curl_slist_free_all(config->headers);
+  curl_slist_free_all(config->http3_headers);
+  curl_slist_free_all(config->ws_headers);
   curl_slist_free_all(config->proxyheaders);
 
   curl_mime_free(config->mimepost);

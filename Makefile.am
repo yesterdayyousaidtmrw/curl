@@ -75,7 +75,7 @@ EXTRA_DIST = \
 
 DISTCLEANFILES = buildinfo.txt
 
-bin_SCRIPTS = curl-config
+bin_SCRIPTS = curl-impersonate-config
 
 CURL_ETAGS_FILES = \
   $(srcdir)/include/curl/curl.h \
@@ -99,7 +99,7 @@ SUBDIRS = lib docs src scripts
 DIST_SUBDIRS = $(SUBDIRS) tests projects include docs
 
 pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA = libcurl.pc
+pkgconfig_DATA = libcurl-impersonate.pc
 
 dist-hook:
 	rm -rf $(top_builddir)/tests/log

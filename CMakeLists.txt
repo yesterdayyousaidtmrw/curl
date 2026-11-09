@@ -64,7 +64,14 @@ string(REGEX REPLACE "([0-9]+\.[0-9]+\.[0-9]+).+" "\\1" _curl_version_sem "${_cu
 # Initializes PROJECT_BINARY_DIR, PROJECT_SOURCE_DIR
 project(CURL
   VERSION "${_curl_version_sem}"
-  LANGUAGES C)
+  LANGUAGES C CXX)
+
+set(CURL_IMPERSONATE_VERSION "local" CACHE STRING
+  "curl-impersonate version reported by curl_version()")
+string(TIMESTAMP CURL_IMPERSONATE_BUILD_DATE "%Y-%m-%d" UTC)
+add_compile_definitions(
+  "CURL_IMPERSONATE_VERSION=\"${CURL_IMPERSONATE_VERSION}\""
+  "CURL_IMPERSONATE_BUILD_DATE=\"${CURL_IMPERSONATE_BUILD_DATE}\"")
 
 # CMake does not recognize some targets accurately. Touch up configuration manually as a workaround.
 if(WINDOWS_STORE AND MINGW)  # MinGW UWP build
@@ -154,8 +161,8 @@ if(CURL_PATCHSTAMP)
   set(CURL_PATCHSTAMP "\"${CURL_PATCHSTAMP}\"")
 endif()
 
-set(LIB_NAME "libcurl")
-set(EXE_NAME "curl")
+set(LIB_NAME "libcurl-impersonate")
+set(EXE_NAME "curl-impersonate")
 
 set_property(DIRECTORY APPEND PROPERTY INCLUDE_DIRECTORIES "${PROJECT_SOURCE_DIR}/include")
 
@@ -809,7 +816,11 @@ if(_use_core_foundation_and_core_services)
 endif()
 
 if(NOT DEFINED _curl_stdlib_cxx)
-  set(_curl_stdlib_cxx "stdc++")
+  if(APPLE OR BSD OR ANDROID)
+    set(_curl_stdlib_cxx "c++")
+  else()
+    set(_curl_stdlib_cxx "stdc++")
+  endif()
 endif()
 
 if(CURL_USE_OPENSSL)
@@ -850,7 +861,7 @@ if(CURL_USE_OPENSSL)
         message(WARNING "AWS-LC/BoringSSL requires POSIX Threads.")
       endif()
     endif()
-    if(OPENSSL_USE_STATIC_LIBS AND
+    if(OPENSSL_USE_STATIC_LIBS AND NOT MSVC AND
        (CMAKE_C_COMPILER_ID STREQUAL "GNU" OR CMAKE_C_COMPILER_ID MATCHES "Clang"))
       list(APPEND CURL_LIBS "${_curl_stdlib_cxx}")
     endif()
@@ -1001,6 +1012,7 @@ macro(curl_openssl_check_exists)
       list(APPEND CMAKE_REQUIRED_LIBRARIES "bcrypt")  # for OpenSSL/LibreSSL BCryptGenRandom()
     endif()
     if((HAVE_AWSLC OR HAVE_BORINGSSL) AND OPENSSL_USE_STATIC_LIBS AND
+       NOT MSVC AND
        (CMAKE_C_COMPILER_ID STREQUAL "GNU" OR CMAKE_C_COMPILER_ID MATCHES "Clang"))
       list(APPEND CMAKE_REQUIRED_LIBRARIES "${_curl_stdlib_cxx}")
     endif()
@@ -2088,7 +2100,7 @@ endif()
 
 if(NOT CURL_DISABLE_INSTALL)
 
-  # curl-config needs the following options to be set.
+  # curl-impersonate-config needs the following options to be set.
   set(CC                      "${CMAKE_C_COMPILER}")
   set(CONFIGURE_OPTIONS       "")
   set(CURLVERSION             "${_curl_version}")
@@ -2287,7 +2299,7 @@ if(NOT CURL_DISABLE_INSTALL)
     set(ENABLE_STATIC       "no")
   endif()
 
-  # Generate a "curl-config" matching this config.
+  # Generate a "curl-impersonate-config" matching this config.
   # Consumed variables:
   #   CC
   #   CONFIGURE_OPTIONS
@@ -2309,8 +2321,8 @@ if(NOT CURL_DISABLE_INSTALL)
   #   VERSIONNUM
   configure_file(
     "${PROJECT_SOURCE_DIR}/curl-config.in"
-    "${PROJECT_BINARY_DIR}/curl-config" @ONLY)
-  install(FILES "${PROJECT_BINARY_DIR}/curl-config"
+    "${PROJECT_BINARY_DIR}/curl-impersonate-config" @ONLY)
+  install(FILES "${PROJECT_BINARY_DIR}/curl-impersonate-config"
     DESTINATION ${CMAKE_INSTALL_BINDIR}
     PERMISSIONS
       OWNER_READ OWNER_WRITE OWNER_EXECUTE
@@ -2459,7 +2471,7 @@ if(NOT CURL_DISABLE_INSTALL)
   endif()
 
   if(BUILD_CURL_EXE)
-    install(FILES "${PROJECT_SOURCE_DIR}/scripts/wcurl"
+    install(FILES "${PROJECT_SOURCE_DIR}/scripts/wcurl-impersonate"
       DESTINATION ${CMAKE_INSTALL_BINDIR}
       PERMISSIONS
         OWNER_READ OWNER_WRITE OWNER_EXECUTE

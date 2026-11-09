@@ -76,6 +76,7 @@ static ParameterError getstrn(char **str, const char *val,
 static const struct LongShort aliases[] = {
   {"abstract-unix-socket",       ARG_FILE, ' ', C_ABSTRACT_UNIX_SOCKET},
   {"alpn",                       ARG_BOOL|ARG_NO|ARG_TLS, ' ', C_ALPN},
+  {"alps",                       ARG_BOOL, ' ', C_ALPS},  // curl-impersonate
   {"alt-svc",                    ARG_STRG, ' ', C_ALT_SVC},
   {"anyauth",                    ARG_NONE, ' ', C_ANYAUTH},
   {"append",                     ARG_BOOL, 'a', C_APPEND},
@@ -86,6 +87,7 @@ static const struct LongShort aliases[] = {
   {"cacert",                     ARG_FILE|ARG_TLS, ' ', C_CACERT},
   {"capath",                     ARG_FILE|ARG_TLS, ' ', C_CAPATH},
   {"cert",                       ARG_FILE|ARG_TLS|ARG_CLEAR, 'E', C_CERT},
+  {"cert-compression",           ARG_STRG|ARG_TLS, ' ', C_CERT_COMPRESSION},  // curl-impersonate
   {"cert-status",                ARG_BOOL|ARG_TLS, ' ', C_CERT_STATUS},
   {"cert-type",                  ARG_STRG|ARG_TLS, ' ', C_CERT_TYPE},
   {"ciphers",                    ARG_STRG|ARG_TLS, ' ', C_CIPHERS},
@@ -137,6 +139,7 @@ static const struct LongShort aliases[] = {
   {"false-start",                ARG_BOOL, ' ', C_FALSE_START},
   {"follow",                     ARG_BOOL, ' ', C_FOLLOW},
   {"form",                       ARG_STRG, 'F', C_FORM},
+  {"form-boundary",              ARG_STRG, ' ', C_FORM_BOUNDARY},
   {"form-escape",                ARG_BOOL, ' ', C_FORM_ESCAPE},
   {"form-string",                ARG_STRG, ' ', C_FORM_STRING},
   {"ftp-account",                ARG_STRG, ' ', C_FTP_ACCOUNT},
@@ -163,13 +166,30 @@ static const struct LongShort aliases[] = {
   {"hostpubmd5",                 ARG_STRG, ' ', C_HOSTPUBMD5},
   {"hostpubsha256",              ARG_STRG, ' ', C_HOSTPUBSHA256},
   {"hsts",                       ARG_STRG|ARG_TLS, ' ', C_HSTS},
+  {"http-header-order",          ARG_STRG, ' ', C_HTTP_HEADER_ORDER},
   {"http0.9",                    ARG_BOOL, ' ', C_HTTP0_9},
   {"http1.0",                    ARG_NONE, '0', C_HTTP1_0},
   {"http1.1",                    ARG_NONE, ' ', C_HTTP1_1},
   {"http2",                      ARG_NONE, ' ', C_HTTP2},
+  {"http2-no-priority",          ARG_BOOL, ' ', C_HTTP2_NO_PRIORITY},  // curl-impersonate
   {"http2-prior-knowledge",      ARG_NONE, ' ', C_HTTP2_PRIOR_KNOWLEDGE},
+  {"http2-pseudo-headers-order", ARG_STRG, ' ', C_HTTP2_PSEUDO_HEADERS_ORDER},  // curl-impersonate
+  {"http2-settings",             ARG_STRG, ' ', C_HTTP2_SETTINGS},  // curl-impersonate
+  {"http2-stream-exclusive",     ARG_STRG, ' ', C_HTTP2_STREAM_EXCLUSIVE},  // curl-impersonate
+  {"http2-stream-weight",        ARG_STRG, ' ', C_HTTP2_STREAM_WEIGHT},  // curl-impersonate
+  {"http2-streams",              ARG_STRG, ' ', C_HTTP2_STREAMS},  // curl-impersonate
+  {"http2-window-update",        ARG_STRG, ' ', C_HTTP2_WINDOW_UPDATE},  // curl-impersonate
   {"http3",                      ARG_NONE|ARG_TLS, ' ', C_HTTP3},
+  {"http3-curves",               ARG_STRG|ARG_TLS, ' ', C_HTTP3_CURVES},  // curl-impersonate
+  {"http3-httpheader",           ARG_STRG, ' ', C_HTTP3_HTTPHEADER},  // curl-impersonate
+  {"http3-httpheader-order",     ARG_STRG, ' ', C_HTTP3_HTTPHEADER_ORDER},  // curl-impersonate
   {"http3-only",                 ARG_NONE|ARG_TLS, ' ', C_HTTP3_ONLY},
+  {"http3-pseudo-headers-order", ARG_STRG, ' ', C_HTTP3_PSEUDO_HEADERS_ORDER},  // curl-impersonate
+  {"http3-settings",             ARG_STRG, ' ', C_HTTP3_SETTINGS},  // curl-impersonate
+  {"http3-sig-hash-algs",        ARG_STRG, ' ', C_HTTP3_SIG_HASH_ALGS},  // curl-impersonate
+  {"http3-tls-extension-order",  ARG_STRG, ' ', C_HTTP3_TLS_EXTENSION_ORDER},  // curl-impersonate
+  {"http3-tls-permute-extensions", ARG_BOOL, ' ',
+   C_HTTP3_TLS_PERMUTE_EXTENSIONS},  /* curl-impersonate */
 #ifndef CURL_DISABLE_HTTPSIG
   {"httpsig-algo",               ARG_STRG, ' ', C_HTTPSIG_ALGORITHM},
   {"httpsig-headers",            ARG_STRG, ' ', C_HTTPSIG_HEADERS},
@@ -177,6 +197,7 @@ static const struct LongShort aliases[] = {
   {"httpsig-keyid",              ARG_STRG, ' ', C_HTTPSIG_KEYID},
 #endif
   {"ignore-content-length",      ARG_BOOL, ' ', C_IGNORE_CONTENT_LENGTH},
+  {"impersonate",                ARG_STRG, ' ', C_IMPERSONATE},
   {"include",                    ARG_BOOL, ' ', C_INCLUDE},
   {"insecure",                   ARG_BOOL, 'k', C_INSECURE},
   {"interface",                  ARG_STRG, ' ', C_INTERFACE},
@@ -201,6 +222,7 @@ static const struct LongShort aliases[] = {
   {"list-only",                  ARG_BOOL, 'l', C_LIST_ONLY},
   {"local-port",                 ARG_STRG, ' ', C_LOCAL_PORT},
   {"location",                   ARG_BOOL, 'L', C_LOCATION},
+  {"location-safe",              ARG_BOOL, ' ', C_LOCATION_SAFE},
   {"location-trusted",           ARG_BOOL, ' ', C_LOCATION_TRUSTED},
   {"login-options",              ARG_STRG, ' ', C_LOGIN_OPTIONS},
   {"mail-auth",                  ARG_STRG, ' ', C_MAIL_AUTH},
@@ -252,6 +274,7 @@ static const struct LongShort aliases[] = {
    C_PROXY_CERT},
   {"proxy-cert-type",            ARG_STRG|ARG_TLS, ' ', C_PROXY_CERT_TYPE},
   {"proxy-ciphers",              ARG_STRG|ARG_TLS, ' ', C_PROXY_CIPHERS},
+  {"proxy-credential-no-reuse",  ARG_BOOL|ARG_TLS, ' ', C_PROXY_CREDENTIAL_NO_REUSE},
   {"proxy-crlfile",              ARG_FILE|ARG_TLS, ' ', C_PROXY_CRLFILE},
   {"proxy-digest",               ARG_BOOL, ' ', C_PROXY_DIGEST},
   {"proxy-header",               ARG_STRG, ' ', C_PROXY_HEADER},
@@ -280,6 +303,10 @@ static const struct LongShort aliases[] = {
   {"proxy1.0",                   ARG_STRG, ' ', C_PROXY1_0},
   {"proxytunnel",                ARG_BOOL, 'p', C_PROXYTUNNEL},
   {"pubkey",                     ARG_STRG, ' ', C_PUBKEY},
+  {"quic-cid-length",            ARG_STRG|ARG_TLS, ' ', C_QUIC_CID_LENGTH},  // curl-impersonate
+  {"quic-initial-packet-number", ARG_STRG|ARG_TLS, ' ',
+   C_QUIC_INITIAL_PACKET_NUMBER},  /* curl-impersonate */
+  {"quic-transport-params",      ARG_STRG|ARG_TLS, ' ', C_QUIC_TRANSPORT_PARAMETERS},  // curl-impersonate
   {"quote",                      ARG_STRG, 'Q', C_QUOTE},
   {"random-file",                ARG_FILE|ARG_DEPR, ' ', C_RANDOM_FILE},
   {"range",                      ARG_STRG, 'r', C_RANGE},
@@ -305,8 +332,8 @@ static const struct LongShort aliases[] = {
   {"sessionid",                  ARG_BOOL|ARG_NO, ' ', C_SESSIONID},
   {"show-error",                 ARG_BOOL, 'S', C_SHOW_ERROR},
   {"show-headers",               ARG_BOOL, 'i', C_SHOW_HEADERS},
-  {"sigalgs",                    ARG_STRG|ARG_TLS, ' ',
-   C_SIGNATURE_ALGORITHMS},
+  {"sigalgs",                    ARG_STRG|ARG_TLS, ' ', C_SIGNATURE_ALGORITHMS},
+  {"signature-hashes",           ARG_STRG, ' ', C_SIGNATURE_HASHES}, // curl-impersonate
   {"silent",                     ARG_BOOL, 's', C_SILENT},
   {"skip-existing",              ARG_BOOL, ' ', C_SKIP_EXISTING},
   {"socks4",                     ARG_STRG, ' ', C_SOCKS4},
@@ -319,6 +346,7 @@ static const struct LongShort aliases[] = {
   {"socks5-hostname",            ARG_STRG, ' ', C_SOCKS5_HOSTNAME},
   {"speed-limit",                ARG_UNUM, 'Y', C_SPEED_LIMIT},
   {"speed-time",                 ARG_UNUM, 'y', C_SPEED_TIME},
+  {"split-cookies",              ARG_BOOL, ' ', C_SPLIT_COOKIES},
   {"ssl",                        ARG_BOOL|ARG_TLS, ' ', C_SSL},
   {"ssl-allow-beast",            ARG_BOOL|ARG_TLS, ' ', C_SSL_ALLOW_BEAST},
   {"ssl-auto-client-cert",       ARG_BOOL|ARG_TLS, ' ',
@@ -343,8 +371,18 @@ static const struct LongShort aliases[] = {
   {"tftp-blksize",               ARG_UNUM, ' ', C_TFTP_BLKSIZE},
   {"tftp-no-options",            ARG_BOOL, ' ', C_TFTP_NO_OPTIONS},
   {"time-cond",                  ARG_STRG, 'z', C_TIME_COND},
+  {"tls-delegated-credentials",  ARG_STRG, ' ', C_TLS_DELEGATED_CREDENTIALS},  // curl-impersonate
   {"tls-earlydata",              ARG_BOOL|ARG_TLS, ' ', C_TLS_EARLYDATA},
+  {"tls-extension-order",        ARG_STRG, ' ', C_TLS_EXTENSION_ORDER},  // curl-impersonate
+  {"tls-grease",                 ARG_BOOL, ' ', C_TLS_GREASE},  // curl-impersonate
+  {"tls-key-shares-limit",       ARG_STRG, ' ', C_TLS_KEY_SHARES_LIMIT},  // curl-impersonate
   {"tls-max",                    ARG_STRG|ARG_TLS, ' ', C_TLS_MAX},
+  {"tls-permute-extensions",     ARG_BOOL, ' ', C_TLS_PERMUTE_EXTENSIONS},  // curl-impersonate
+  {"tls-record-size-limit",      ARG_STRG, ' ', C_TLS_RECORD_SIZE_LIMIT},  // curl-impersonate
+  {"tls-session-ticket",         ARG_BOOL, ' ', C_TLS_SESSION_TICKET},  // curl-impersonate
+  {"tls-signed-cert-timestamps", ARG_BOOL, ' ', C_TLS_SIGNED_CERT_TIMESTAMPS}, // curl-impersonate
+  {"tls-trust-anchors",          ARG_STRG, ' ', C_TLS_TRUST_ANCHORS}, // curl-impersonate
+  {"tls-use-new-alps-codepoint", ARG_BOOL, ' ', C_TLS_USE_NEW_ALPS_CODEPOINT},  // curl-impersonate
   {"tls13-ciphers",              ARG_STRG|ARG_TLS, ' ', C_TLS13_CIPHERS},
   {"tlsauthtype",               ARG_STRG|ARG_TLS|ARG_DEPR, ' ', C_TLSAUTHTYPE},
   {"tlspassword",     ARG_STRG|ARG_TLS|ARG_CLEAR|ARG_DEPR, ' ', C_TLSPASSWORD},
@@ -376,6 +414,10 @@ static const struct LongShort aliases[] = {
   {"wdebug",                     ARG_BOOL, ' ', C_WDEBUG},
 #endif
   {"write-out",                  ARG_STRG, 'w', C_WRITE_OUT},
+  {"ws-cert-compression",        ARG_STRG|ARG_TLS, ' ', C_WS_CERT_COMPRESSION},  // curl-impersonate
+  {"ws-disable-session-ticket",  ARG_BOOL, ' ', C_WS_DISABLE_SESSION_TICKET},  // curl-impersonate
+  {"ws-httpheader",              ARG_STRG, ' ', C_WS_HTTPHEADER},  // curl-impersonate
+  {"ws-httpheader-order",        ARG_STRG, ' ', C_WS_HTTPHEADER_ORDER},  // curl-impersonate
   {"xattr",                      ARG_BOOL, ' ', C_XATTR},
 };
 
@@ -1311,9 +1353,14 @@ static ParameterError parse_header(struct OperationConfig *config,
       curlx_dyn_init(&line, 1024 * 100);
       while(my_get_line(file, &line, &error)) {
         const char *ptr = curlx_dyn_ptr(&line);
-        err = add2list(cmd == C_PROXY_HEADER ? /* --proxy-header? */
-                       &config->proxyheaders :
-                       &config->headers, ptr);
+        struct curl_slist **headers = &config->headers;
+        if(cmd == C_PROXY_HEADER) /* --proxy-header */
+          headers = &config->proxyheaders;
+        else if(cmd == C_HTTP3_HTTPHEADER) /* --http3-httpheader */
+          headers = &config->http3_headers;
+        else if(cmd == C_WS_HTTPHEADER) /* --ws-httpheader */
+          headers = &config->ws_headers;
+        err = add2list(headers, ptr);
         if(err)
           break;
       }
@@ -1331,6 +1378,10 @@ static ParameterError parse_header(struct OperationConfig *config,
     }
     if(cmd == C_PROXY_HEADER) /* --proxy-header */
       err = add2list(&config->proxyheaders, nextarg);
+    else if(cmd == C_HTTP3_HTTPHEADER) /* --http3-httpheader */
+      err = add2list(&config->http3_headers, nextarg);
+    else if(cmd == C_WS_HTTPHEADER) /* --ws-httpheader */
+      err = add2list(&config->ws_headers, nextarg);
     else
       err = add2list(&config->headers, nextarg);
   }
@@ -1839,6 +1890,9 @@ static ParameterError opt_bool(struct OperationConfig *config,
   case C_ALPN: /* --alpn */
     config->noalpn = !toggle;
     break;
+  case C_ALPS:  /* --alps curl-impersonate */
+    config->alps = toggle;
+    break;
   case C_DISABLE_EPSV: /* --disable-epsv */
     config->disable_epsv = toggle;
     break;
@@ -2014,6 +2068,34 @@ static ParameterError opt_bool(struct OperationConfig *config,
   case C_TLS_EARLYDATA: /* --tls-earlydata */
     config->ssl_allow_earlydata = toggle;
     break;
+  case C_TLS_SIGNED_CERT_TIMESTAMPS:
+    config->tls_signed_cert_timestamps = toggle;
+    break;
+  case C_TLS_SESSION_TICKET:  /* --tls-session-ticket curl-impersonate */
+    config->noticket = (!toggle)?TRUE:FALSE;
+    break;
+  case C_WS_DISABLE_SESSION_TICKET:  /* --ws-disable-session-ticket curl-impersonate */
+    config->ws_disable_session_ticket = toggle;
+    break;
+  case C_TLS_PERMUTE_EXTENSIONS:  /* --tls-permute-extensions curl-impersonate */
+    config->ssl_permute_extensions = toggle;
+    break;
+  case C_HTTP3_TLS_PERMUTE_EXTENSIONS:
+    /* --http3-tls-permute-extensions curl-impersonate */
+    config->http3_ssl_permute_extensions = toggle ?
+      CURL_HTTP3_SSL_PERMUTE_ENABLE : CURL_HTTP3_SSL_PERMUTE_DISABLE;
+    break;
+  case C_TLS_GREASE:  /* --tls-grease curl-impersonate */
+    config->tls_grease = toggle;
+    break;
+  case C_TLS_USE_NEW_ALPS_CODEPOINT: /* --tls-use-new-alps-codepoint curl-impersonate */
+    config->tls_use_new_alps_codepoint = toggle;
+    break;
+  case C_HTTP2_NO_PRIORITY:
+    if(!feature_http2)
+      return PARAM_LIBCURL_DOESNT_SUPPORT;
+    config->http2_no_priority = toggle;
+    break;
   case C_SUPPRESS_CONNECT_HEADERS: /* --suppress-connect-headers */
     config->suppress_connect_headers = toggle;
     break;
@@ -2140,6 +2222,9 @@ static ParameterError opt_bool(struct OperationConfig *config,
   case C_JUNK_SESSION_COOKIES: /* --junk-session-cookies */
     config->cookiesession = toggle;
     break;
+  case C_SPLIT_COOKIES: /* --split-cookies */
+    config->split_cookies = toggle;
+    break;
   case C_HEAD: /* --head */
     config->no_body = toggle;
     config->show_headers = toggle;
@@ -2159,6 +2244,9 @@ static ParameterError opt_bool(struct OperationConfig *config,
     break;
   case C_LIST_ONLY: /* --list-only */
     config->dirlistonly = toggle; /* only list names of the FTP directory */
+    break;
+  case C_LOCATION_SAFE: /* --location-safe */
+    config->followlocation = toggle ? CURLFOLLOW_SAFE : 0;
     break;
   case C_MANUAL: /* --manual */
     if(toggle)   /* --no-manual shows no manual... */
@@ -2218,6 +2306,9 @@ static ParameterError opt_bool(struct OperationConfig *config,
     break;
   case C_MPTCP: /* --mptcp */
     config->mptcp = toggle;
+    break;
+  case C_PROXY_CREDENTIAL_NO_REUSE: /*  --proxy-credential-no-reuse */
+    config->proxy_credential_no_reuse = toggle;
     break;
   case C_LOCATION_TRUSTED: /* --location-trusted */
     config->unrestricted_auth = toggle;
@@ -2713,6 +2804,120 @@ static ParameterError opt_string(struct OperationConfig *config,
       err = PARAM_BAD_USE;
     }
     break;
+  case C_TLS_RECORD_SIZE_LIMIT:
+    err = str2unum(&config->tls_record_size_limit, nextarg);
+    break;
+  case C_TLS_KEY_SHARES_LIMIT:
+    err = str2unum(&config->tls_key_shares_limit, nextarg);
+    break;
+  case C_TLS_EXTENSION_ORDER:  /* --tls-extension-order curl-impersonate */
+    err = getstr(&config->tls_extension_order, nextarg, ALLOW_BLANK);
+    break;
+  case C_TLS_DELEGATED_CREDENTIALS:
+    err = getstr(&config->tls_delegated_credentials, nextarg, ALLOW_BLANK);
+    break;
+  case C_TLS_TRUST_ANCHORS:
+    err = getstr(&config->tls_trust_anchors, nextarg, ALLOW_BLANK);
+    break;
+  case C_HTTP2_PSEUDO_HEADERS_ORDER: /* --http2-pseudo-headers-order curl-impersonate */
+    if(!feature_http2)
+      return PARAM_LIBCURL_DOESNT_SUPPORT;
+    err = getstr(&config->http2_pseudo_headers_order, nextarg, ALLOW_BLANK);
+    break;
+  case C_HTTP_HEADER_ORDER: /* --http-header-order curl-impersonate */
+    err = getstr(&config->http_header_order, nextarg, ALLOW_BLANK);
+    break;
+  case C_HTTP2_SETTINGS:  /* --http2-settings curl-impersonate */
+    if(!feature_http2)
+      return PARAM_LIBCURL_DOESNT_SUPPORT;
+    err = getstr(&config->http2_settings, nextarg, ALLOW_BLANK);
+    break;
+  case C_HTTP2_STREAM_EXCLUSIVE:
+    if(!feature_http2)
+      return PARAM_LIBCURL_DOESNT_SUPPORT;
+    err = str2num(&config->http2_stream_exclusive, nextarg);
+    if(config->http2_stream_exclusive < 0) return PARAM_BAD_NUMERIC;
+    break;
+  case C_HTTP2_STREAM_WEIGHT:
+    if(!feature_http2)
+      return PARAM_LIBCURL_DOESNT_SUPPORT;
+    err = str2num(&config->http2_stream_weight, nextarg);
+    if(config->http2_stream_weight < 0) return PARAM_BAD_NUMERIC;
+    break;
+  case C_HTTP2_WINDOW_UPDATE:  /* --http2-window-update curl-impersonate */
+    if(!feature_http2)
+      return PARAM_LIBCURL_DOESNT_SUPPORT;
+    err = str2num(&config->http2_window_update, nextarg);
+    if(config->http2_window_update < -1) return PARAM_BAD_NUMERIC;
+    break;
+  case C_HTTP2_STREAMS:  /* --http2-streams curl-impersonate */
+    if(!feature_http2)
+      return PARAM_LIBCURL_DOESNT_SUPPORT;
+    err = getstr(&config->http2_streams, nextarg, ALLOW_BLANK);
+    break;
+  case C_HTTP3_PSEUDO_HEADERS_ORDER: /* --http3-pseudo-headers-order curl-impersonate */
+    if(!feature_http3)
+      return PARAM_LIBCURL_DOESNT_SUPPORT;
+    err = getstr(&config->http3_pseudo_headers_order, nextarg, ALLOW_BLANK);
+    break;
+  case C_HTTP3_HTTPHEADER_ORDER: /* --http3-httpheader-order curl-impersonate */
+    if(!feature_http3)
+      return PARAM_LIBCURL_DOESNT_SUPPORT;
+    err = getstr(&config->http3_http_header_order, nextarg, ALLOW_BLANK);
+    break;
+  case C_HTTP3_SETTINGS:  /* --http3-settings curl-impersonate */
+    if(!feature_http3)
+      return PARAM_LIBCURL_DOESNT_SUPPORT;
+    err = getstr(&config->http3_settings, nextarg, ALLOW_BLANK);
+    break;
+  case C_HTTP3_CURVES:  /* --http3-curves curl-impersonate */
+    if(!feature_http3)
+      return PARAM_LIBCURL_DOESNT_SUPPORT;
+    err = getstr(&config->http3_ssl_ec_curves, nextarg, DENY_BLANK);
+    break;
+  case C_HTTP3_SIG_HASH_ALGS:  /* --http3-sig-hash-algs curl-impersonate */
+    if(!feature_http3)
+      return PARAM_LIBCURL_DOESNT_SUPPORT;
+    err = getstr(&config->http3_sig_hash_algs, nextarg, ALLOW_BLANK);
+    break;
+  case C_HTTP3_TLS_EXTENSION_ORDER:  /* --http3-tls-extension-order curl-impersonate */
+    if(!feature_http3)
+      return PARAM_LIBCURL_DOESNT_SUPPORT;
+    err = getstr(&config->http3_tls_extension_order, nextarg, ALLOW_BLANK);
+    break;
+  case C_WS_HTTPHEADER_ORDER:  /* --ws-httpheader-order curl-impersonate */
+    err = getstr(&config->ws_http_header_order, nextarg, ALLOW_BLANK);
+    break;
+  case C_QUIC_CID_LENGTH:  /* --quic-cid-length curl-impersonate */
+    if(!feature_http3)
+      return PARAM_LIBCURL_DOESNT_SUPPORT;
+    err = getstr(&config->quic_cid_length, nextarg, DENY_BLANK);
+    break;
+  case C_QUIC_INITIAL_PACKET_NUMBER:
+    if(!feature_http3)
+      return PARAM_LIBCURL_DOESNT_SUPPORT;
+    err = str2num(&config->quic_initial_packet_number, nextarg);
+    if(!err && ((config->quic_initial_packet_number < -1) ||
+                (config->quic_initial_packet_number > INT32_MAX)))
+      err = PARAM_BAD_NUMERIC;
+    break;
+  case C_QUIC_TRANSPORT_PARAMETERS:  /* --quic-transport-params curl-impersonate */
+    if(!feature_http3)
+      return PARAM_LIBCURL_DOESNT_SUPPORT;
+    err = getstr(&config->quic_transport_parameters, nextarg, ALLOW_BLANK);
+    break;
+  case C_CERT_COMPRESSION:  /* --cert-compression curl-impersonate */
+    err = getstr(&config->ssl_cert_compression, nextarg, ALLOW_BLANK);
+    break;
+  case C_WS_CERT_COMPRESSION:  /* --ws-cert-compression curl-impersonate */
+    err = getstr(&config->ws_ssl_cert_compression, nextarg, ALLOW_BLANK);
+    break;
+  case C_SIGNATURE_HASHES: /* --signature-hashes */
+    err = getstr(&config->ssl_signature_algorithms, nextarg, ALLOW_BLANK);
+    break;
+  case C_FORM_BOUNDARY: /* --form-boundary */
+    err = getstr(&config->form_boundary, nextarg, DENY_BLANK);
+    break;
   case C_TRACE_CONFIG: /* --trace-config */
     global->trace_set = TRUE;
     if(set_trace_config(nextarg))
@@ -2741,6 +2946,9 @@ static ParameterError opt_string(struct OperationConfig *config,
       err = PARAM_LIBCURL_DOESNT_SUPPORT;
     else
       err = getstr(&config->hsts, nextarg, ALLOW_BLANK);
+    break;
+  case C_IMPERSONATE: /* --impersonate */
+    err = getstr(&config->impersonate, nextarg, DENY_BLANK);
     break;
   case C_COOKIE: /* --cookie */
     if(strchr(nextarg, '=')) {
@@ -2858,8 +3066,14 @@ static ParameterError opt_string(struct OperationConfig *config,
   case C_REQUEST_TARGET: /* --request-target */
     err = getstr(&config->request_target, nextarg, DENY_BLANK);
     break;
+  case C_HTTP3_HTTPHEADER: /* --http3-httpheader */
+    if(!feature_http3)
+      return PARAM_LIBCURL_DOESNT_SUPPORT;
+    err = parse_header(config, (cmdline_t)a->cmd, nextarg);
+    break;
   case C_HEADER: /* --header */
   case C_PROXY_HEADER: /* --proxy-header */
+  case C_WS_HTTPHEADER: /* --ws-httpheader */
     err = parse_header(config, (cmdline_t)a->cmd, nextarg);
     break;
   case C_OUTPUT_DIR: /* --output-dir */

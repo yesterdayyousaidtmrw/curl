@@ -403,6 +403,9 @@ static CURLcode ssl_setopts(struct OperationConfig *config, CURL *curl)
 
   if(config->ssl_ec_curves)
     MY_SETOPT_STR(curl, CURLOPT_SSL_EC_CURVES, config->ssl_ec_curves);
+  if(config->http3_ssl_ec_curves)
+    MY_SETOPT_STR(curl, CURLOPT_HTTP3_SSL_EC_CURVES,
+                  config->http3_ssl_ec_curves);
 
   if(config->ssl_signature_algorithms)
     MY_SETOPT_STR(curl, CURLOPT_SSL_SIGNATURE_ALGORITHMS,
@@ -444,9 +447,11 @@ static CURLcode ssl_setopts(struct OperationConfig *config, CURL *curl)
   if(config->doh_verifystatus)
     my_setopt_long(curl, CURLOPT_DOH_SSL_VERIFYSTATUS, 1);
 
-  my_setopt_SSLVERSION(curl, CURLOPT_SSLVERSION,
-                       tlsversion(config->ssl_version,
-                                  config->ssl_version_max));
+  /* Only set the version when requested, so impersonation can provide it. */
+  if(config->ssl_version || config->ssl_version_max)
+    my_setopt_SSLVERSION(curl, CURLOPT_SSLVERSION,
+                         tlsversion(config->ssl_version,
+                                    config->ssl_version_max));
   if(config->proxy)
     my_setopt_SSLVERSION(curl, CURLOPT_PROXY_SSLVERSION,
                          config->proxy_ssl_version);
@@ -500,6 +505,64 @@ static CURLcode ssl_setopts(struct OperationConfig *config, CURL *curl)
       warnf("ignoring %s, not supported by libcurl with %s",
             "--proxy-tls13-ciphers", ssl_backend());
   }
+
+  if(config->ssl_cert_compression)
+    my_setopt_str(curl, CURLOPT_SSL_CERT_COMPRESSION,
+                  config->ssl_cert_compression);
+  if(config->ws_ssl_cert_compression)
+    my_setopt_str(curl, CURLOPT_WS_SSL_CERT_COMPRESSION,
+                  config->ws_ssl_cert_compression);
+
+  if(config->ssl_permute_extensions)
+    my_setopt_long(curl, CURLOPT_SSL_PERMUTE_EXTENSIONS, 1L);
+
+  if(config->http3_ssl_permute_extensions !=
+     CURL_HTTP3_SSL_PERMUTE_FALLBACK)
+    my_setopt_long(curl, CURLOPT_HTTP3_SSL_PERMUTE_EXTENSIONS,
+                   config->http3_ssl_permute_extensions ==
+                   CURL_HTTP3_SSL_PERMUTE_ENABLE ? 1L : 0L);
+
+  if(config->tls_grease)
+    my_setopt_long(curl, CURLOPT_TLS_GREASE, 1L);
+
+  if(config->tls_extension_order)
+    my_setopt_str(curl, CURLOPT_TLS_EXTENSION_ORDER, config->tls_extension_order);
+
+  if (config->tls_use_new_alps_codepoint)
+    my_setopt_long(curl, CURLOPT_TLS_USE_NEW_ALPS_CODEPOINT, 1L);
+
+  if(config->tls_delegated_credentials)
+    my_setopt_str(curl, CURLOPT_TLS_DELEGATED_CREDENTIALS,
+                  config->tls_delegated_credentials);
+
+  if(config->tls_record_size_limit)
+    my_setopt_long(curl, CURLOPT_TLS_RECORD_SIZE_LIMIT,
+                   config->tls_record_size_limit);
+
+  if(config->tls_key_shares_limit)
+    my_setopt_long(curl, CURLOPT_TLS_KEY_SHARES_LIMIT,
+                   config->tls_key_shares_limit);
+
+  if(config->alps) {
+    my_setopt_long(curl, CURLOPT_SSL_ENABLE_ALPS, 1L);
+  }
+
+  if (config->noticket) {
+    my_setopt_long(curl, CURLOPT_SSL_ENABLE_TICKET, 0L);
+  }
+  if(config->ws_disable_session_ticket)
+    my_setopt_long(curl, CURLOPT_WS_SSL_DISABLE_TICKET, 1L);
+
+  if(config->tls_signed_cert_timestamps) {
+    my_setopt_long(curl, CURLOPT_TLS_SIGNED_CERT_TIMESTAMPS, 1L);
+  }
+
+  if(config->tls_trust_anchors)
+    my_setopt_str(curl, CURLOPT_TLS_TRUST_ANCHORS,
+                  config->tls_trust_anchors);
+
+  my_setopt_long(curl, CURLOPT_TLS_STATUS_REQUEST, 1L);
+  /* end of curl-impersonate */
 
   /* curl 7.16.0 */
   if(config->disable_sessionid)
@@ -575,6 +638,9 @@ static CURLcode cookie_setopts(struct OperationConfig *config, CURL *curl)
     MY_SETOPT_STR(curl, CURLOPT_COOKIEJAR, config->cookiejar);
 
   my_setopt_long(curl, CURLOPT_COOKIESESSION, config->cookiesession);
+  my_setopt_long(curl, CURLOPT_SPLIT_COOKIES, config->split_cookies);
+  if(config->form_boundary)
+    MY_SETOPT_STR(curl, CURLOPT_FORM_BOUNDARY, config->form_boundary);
 
   return result;
 }
@@ -712,6 +778,87 @@ static CURLcode http_setopts(struct OperationConfig *config, CURL *curl,
 
   if(config->hsts)
     MY_SETOPT_STR(curl, CURLOPT_HSTS, config->hsts);
+
+  /* curl-impersonate */
+  if(config->http2_no_priority)
+    my_setopt_long(curl, CURLOPT_HTTP2_NO_PRIORITY,
+                   config->http2_no_priority);
+
+  if(config->http2_pseudo_headers_order)
+    my_setopt_str(curl,
+                  CURLOPT_HTTP2_PSEUDO_HEADERS_ORDER,
+                  config->http2_pseudo_headers_order);
+
+  if(config->http_header_order)
+    my_setopt_str(curl,
+                  CURLOPT_HTTPHEADER_ORDER,
+                  config->http_header_order);
+
+  if(config->http2_settings)
+    my_setopt_str(curl,
+                  CURLOPT_HTTP2_SETTINGS,
+                  config->http2_settings);
+
+  if(config->http2_window_update)
+    my_setopt_long(curl, CURLOPT_HTTP2_WINDOW_UPDATE,
+                   config->http2_window_update);
+
+  if(config->http2_stream_exclusive)
+    my_setopt_long(curl, CURLOPT_STREAM_EXCLUSIVE,
+                   config->http2_stream_exclusive);
+
+  if(config->http2_stream_weight)
+    my_setopt_long(curl, CURLOPT_STREAM_WEIGHT,
+                   config->http2_stream_weight);
+
+  if(config->http2_streams)
+    my_setopt_str(curl,
+                  CURLOPT_HTTP2_STREAMS,
+                  config->http2_streams);
+
+  if(config->http3_pseudo_headers_order)
+    my_setopt_str(curl,
+                  CURLOPT_HTTP3_PSEUDO_HEADERS_ORDER,
+                  config->http3_pseudo_headers_order);
+
+  if(config->http3_http_header_order)
+    my_setopt_str(curl,
+                  CURLOPT_HTTP3_HTTPHEADER_ORDER,
+                  config->http3_http_header_order);
+
+  if(config->http3_settings)
+    my_setopt_str(curl,
+                  CURLOPT_HTTP3_SETTINGS,
+                  config->http3_settings);
+
+  if(config->http3_sig_hash_algs)
+    my_setopt_str(curl,
+                  CURLOPT_HTTP3_SIG_HASH_ALGS,
+                  config->http3_sig_hash_algs);
+
+  if(config->ws_http_header_order)
+    my_setopt_str(curl,
+                  CURLOPT_WS_HTTPHEADER_ORDER,
+                  config->ws_http_header_order);
+
+  if(config->http3_tls_extension_order)
+    my_setopt_str(curl,
+                  CURLOPT_HTTP3_TLS_EXTENSION_ORDER,
+                  config->http3_tls_extension_order);
+
+  if(config->quic_cid_length)
+    my_setopt_str(curl,
+                  CURLOPT_QUIC_CID_LENGTH,
+                  config->quic_cid_length);
+
+  my_setopt_long(curl, CURLOPT_QUIC_INITIAL_PACKET_NUMBER,
+                 config->quic_initial_packet_number);
+
+  if(config->quic_transport_parameters)
+    my_setopt_str(curl,
+                  CURLOPT_QUIC_TRANSPORT_PARAMETERS,
+                  config->quic_transport_parameters);
+  /* end of curl-impersonate */
 
   if(config->expect100timeout_ms > 0)
     my_setopt_long(curl, CURLOPT_EXPECT_100_TIMEOUT_MS,
@@ -882,6 +1029,10 @@ static CURLcode proxy_setopts(struct OperationConfig *config, CURL *curl)
   if(config->haproxy_clientip)
     MY_SETOPT_STR(curl, CURLOPT_HAPROXY_CLIENT_IP, config->haproxy_clientip);
 
+  /* curl-impersonate */
+  if(config->proxy_credential_no_reuse)
+    my_setopt_long(curl, CURLOPT_PROXY_CREDENTIAL_NO_REUSE, 1L);
+
   MY_SETOPT_STR(curl, CURLOPT_PROXY_KEYPASSWD, config->proxy_key_passwd);
 
   return result;
@@ -969,11 +1120,13 @@ static CURLcode credentials_and_headers_setopts(struct OperationConfig *config,
     my_setopt_bitmask(curl, CURLOPT_HTTPAUTH, config->authtype);
 
   my_setopt_slist(curl, CURLOPT_HTTPHEADER, config->headers);
+  my_setopt_slist(curl, CURLOPT_HTTP3_HTTPHEADER, config->http3_headers);
+  my_setopt_slist(curl, CURLOPT_WS_HTTPHEADER, config->ws_headers);
 
   if(proto_http || proto_rtsp) {
     MY_SETOPT_STR(curl, CURLOPT_REFERER, config->referer);
-    MY_SETOPT_STR(curl, CURLOPT_USERAGENT, config->useragent ?
-                  config->useragent : CURL_NAME "/" CURL_VERSION);
+    if(config->useragent)
+      MY_SETOPT_STR(curl, CURLOPT_USERAGENT, config->useragent);
   }
 
   MY_SETOPT_STR(curl, CURLOPT_KEYPASSWD, config->key_passwd);
@@ -1001,6 +1154,13 @@ static CURLcode transfer_setopts(struct OperationConfig *config,
   result = setopt_post(config, curl);
   if(result)
     return result;
+
+  /* curl-impersonate: apply after HTTP version/options are configured */
+  if(config->impersonate) {
+    result = my_setopt_str(curl, CURLOPT_IMPERSONATE, config->impersonate);
+    if(result)
+      return result;
+  }
 
   if(config->mime_options)
     my_setopt_long(curl, CURLOPT_MIME_OPTIONS, config->mime_options);

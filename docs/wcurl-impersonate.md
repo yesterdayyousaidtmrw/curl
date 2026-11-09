@@ -1,0 +1,173 @@
+---
+c: Copyright (C) Samuel Henrique <samueloph@debian.org>, Sergio Durigan Junior <sergiodj@debian.org> and many contributors, see the AUTHORS file.
+SPDX-License-Identifier: curl
+Title: wcurl-impersonate
+Section: 1
+Source: wcurl-impersonate
+See-also:
+  - curl (1)
+  - trurl (1)
+Added-in: n/a
+---
+
+# NAME
+
+**wcurl-impersonate** - a simple wrapper around curl-impersonate to easily
+download files.
+
+# SYNOPSIS
+
+**wcurl-impersonate \<URL\>...**
+
+**wcurl-impersonate [--curl-options \<CURL_OPTIONS\>]... [--dry-run] [--no-decode-filename] [-o|-O|--output \<PATH\>] [--] \<URL\>...**
+
+**wcurl-impersonate [--curl-options=\<CURL_OPTIONS\>]... [--dry-run] [--no-decode-filename] [--output=\<PATH\>] [--] \<URL\>...**
+
+**wcurl-impersonate -V|--version**
+
+**wcurl-impersonate -h|--help**
+
+# DESCRIPTION
+
+**wcurl-impersonate** is a simple curl wrapper which lets you use
+curl-impersonate to download files without having to remember any parameters.
+
+Call **wcurl-impersonate** with a list of URLs you want to download and
+**wcurl-impersonate** picks sane defaults.
+
+If you need anything more complex, you can provide any of curl-impersonate's
+supported parameters via the **--curl-options** option. Beware that you likely
+should be using curl-impersonate directly if your use case is not covered.
+
+By default, **wcurl-impersonate** does:
+
+## * Percent-encode whitespace in URLs;
+
+## * Download multiple URLs in parallel
+    if the installed curl-impersonate's version is \>= 7.66.0 (--parallel);
+
+## * Use a total number of 5 parallel connections to the same protocol + hostname + port number target
+    if the installed curl-impersonate's version is \>= 8.16.0 (--parallel-max-host);
+
+## * Follow redirects;
+
+## * Automatically choose a filename as output;
+
+## * Avoid overwriting files
+    if the installed curl-impersonate's version is \>= 7.83.0 (--no-clobber);
+
+## * Perform retries;
+
+## * Set the downloaded file timestamp
+    to the value provided by the server, if available;
+
+## * Default to https
+    if the URL does not contain any scheme;
+
+## * Disable curl-impersonate's URL globbing parser
+    so {} and [] characters in URLs are not treated specially;
+
+## * Percent-decode the resulting filename;
+
+## * Use 'index.html' as the default filename
+    if there is none in the URL, or if it is '-'.
+
+# OPTIONS
+
+## --curl-options, --curl-options=\<CURL_OPTIONS\>...
+
+Specify extra options to be passed when invoking curl-impersonate. May be
+specified more than once.
+
+## -o, -O, --output, --output=\<PATH\>
+
+Use the provided output path instead of getting it from the URL. If multiple
+URLs are provided, resulting files share the same name with a number appended to
+the end (curl-impersonate \>= 7.83.0). If this option is provided multiple
+times, only the last value is considered.
+
+## --no-decode-filename
+
+Do not percent-decode the output filename, even if the percent-encoding in the
+URL was done by **wcurl-impersonate**, e.g.: The URL contained whitespace.
+
+## --dry-run
+
+Do not actually execute curl-impersonate, print what would be invoked.
+
+## -V, \--version
+
+Print version information.
+
+## -h, \--help
+
+Print help message.
+
+# CURL_OPTIONS
+
+Any option supported by curl-impersonate can be set here. This is not used by
+**wcurl-impersonate**; it is instead forwarded to the curl-impersonate
+invocation.
+
+The value is split on whitespace (spaces, tabs and newlines) and each resulting
+word is passed to curl as a separate argument. Quotes and backslashes are not
+interpreted, so an argument containing whitespace cannot be passed this way. For
+example, **--curl-options='-H "Cookie: a=1; b=2"'** passes the four arguments
+`-H`, `"Cookie:`, `a=1;` and `b=2"` to curl, which treats the extra words as
+URLs to download.
+
+To pass arguments that contain whitespace, write them to a curl config file and
+pass it with **--curl-options="--config \<FILE\>"**, or use curl directly.
+
+Everything in \<CURL_OPTIONS\> becomes part of the curl command line, so never
+build it from untrusted input.
+
+# URL
+
+URL to be downloaded. Anything that is not a parameter is considered
+an URL. Whitespace is percent-encoded and the URL is passed to
+curl-impersonate, which then performs the parsing. May be specified more than
+once.
+
+# EXAMPLES
+
+Download a single file:
+
+**wcurl-impersonate example.com/filename.txt**
+
+Download two files in parallel:
+
+**wcurl-impersonate example.com/filename1.txt example.com/filename2.txt**
+
+Download a file passing the **--progress-bar** and **--http2** flags to
+curl-impersonate:
+
+**wcurl-impersonate --curl-options="--progress-bar --http2" example.com/filename.txt**
+
+Resume from an interrupted download. The options necessary to resume the
+download (`--clobber --continue-at -`) must be the **last** options specified in
+`--curl-options`. Note that the only way to resume interrupted downloads is to
+allow wcurl-impersonate to overwrite the destination file:
+
+**wcurl-impersonate --curl-options="--clobber --continue-at -" example.com/filename.txt**
+
+Download multiple files without a limit of concurrent connections per host
+(the default limit is 5):
+
+**wcurl-impersonate --curl-options="--parallel-max-host 0" example.com/filename1.txt example.com/filename2.txt**
+
+# AUTHORS
+
+    Samuel Henrique \<samueloph@debian.org\>
+    Sergio Durigan Junior \<sergiodj@debian.org\>
+    and many contributors, see the AUTHORS file.
+
+# REPORTING BUGS
+
+If you experience any problems with **wcurl-impersonate** that you do not
+experience with curl-impersonate, submit an issue on GitHub:
+https://github.com/curl/wcurl
+
+# COPYRIGHT
+
+**wcurl-impersonate** is licensed under the curl license

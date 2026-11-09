@@ -26,11 +26,16 @@ EXTRA_DIST = coverage.sh completion.pl firefox-db2pem.sh checksrc.pl          \
   checksrc-all.pl mk-ca-bundle.pl mk-unity.pl cd2nroff nroff2cd               \
   cdall cd2cd managen dmaketgz maketgz release-tools.sh verify-release        \
   cmakelint.sh cmakeopts.sh mdlinkcheck CMakeLists.txt perlcheck.sh           \
-  pythonlint.sh spacecheck.pl randdisable wcurl top-complexity                \
+  pythonlint.sh spacecheck.pl randdisable wcurl-impersonate top-complexity    \
   extract-unit-protos .checksrc badwords badwords-all badwords.txt top-length \
   testnum
 
-dist_bin_SCRIPTS = wcurl
+dist_bin_SCRIPTS = wcurl-impersonate
+
+wcurl-impersonate: $(srcdir)/wcurl-impersonate
+	if test "x$(srcdir)" != "x."; then \
+	  cp -f "$(srcdir)/wcurl-impersonate" "$@"; \
+	fi
 
 if USE_ZSH_COMPLETION
 ZSH_COMPLETION_FUNCTION_FILENAME = _curl

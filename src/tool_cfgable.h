@@ -118,6 +118,7 @@ struct OperationConfig {
   char *proxy_key_type;
   char *key_passwd;
   char *proxy_key_passwd;
+  bool proxy_credential_no_reuse;
   char *pubkey;
   char *hostpubmd5;
   char *hostpubsha256;
@@ -126,15 +127,49 @@ struct OperationConfig {
   char *etag_compare_file;
   char *customrequest;
   char *ssl_ec_curves;
+  char *ssl_cert_compression;
+  char *ws_ssl_cert_compression;
   char *ssl_signature_algorithms;
+  char *form_boundary;
   char *krblevel;
   char *request_target;
+  char *http_header_order;
+  char *http2_pseudo_headers_order;
+  char *http2_settings;
+  long http2_window_update;
+  long http2_stream_weight;
+  long http2_stream_exclusive;
+  char *http2_streams;
+  char *http3_pseudo_headers_order;
+  char *http3_settings;
+  char *http3_http_header_order;
+  char *http3_ssl_ec_curves;
+  char *http3_sig_hash_algs;
+  char *http3_tls_extension_order;
+  CURLhttp3sslpermute http3_ssl_permute_extensions;
+  char *quic_cid_length;
+  long quic_initial_packet_number;
+  char *quic_transport_parameters;
+  char *ws_http_header_order;
+  bool ws_disable_session_ticket;
+  char *impersonate;
+  bool http2_no_priority;
+  bool tls_grease;
+  char *tls_trust_anchors;
+  char *tls_extension_order;
+  char *tls_delegated_credentials;
+  long tls_record_size_limit;
+  long tls_key_shares_limit;
+  bool tls_use_new_alps_codepoint;
   char *writeout;           /* %-styled format string to output */
   char *httpgetfields;
   struct curl_slist *quote;
   struct curl_slist *postquote;
   struct curl_slist *prequote;
+  bool ssl_permute_extensions;
   struct curl_slist *headers;
+  struct curl_slist *http3_headers;
+  struct curl_slist *ws_headers;
   struct curl_slist *proxyheaders;
   struct tool_mime *mimeroot;
   struct tool_mime *mimecurrent;
@@ -192,6 +227,9 @@ struct OperationConfig {
   long alivetime;           /* keepalive-time */
   long alivecnt;            /* keepalive-cnt */
   long gssapi_delegation;
+  bool alps;                      /* enable/disable TLS ALPS extension */
+  bool noticket;                  /* enable/disable TLS session ticket */
+  bool tls_signed_cert_timestamps;    /* curl-impersonate: enable extension 18 */
   long expect100timeout_ms;
   long happy_eyeballs_timeout_ms; /* happy eyeballs timeout in milliseconds.
                                      0 is valid. default: CURL_HET_DEFAULT. */
@@ -218,6 +256,7 @@ struct OperationConfig {
   BIT(remote_name_all);   /* --remote-name-all */
   BIT(remote_time);
   BIT(cookiesession);       /* new session? */
+  BIT(split_cookies);       /* split cookies into separate Cookie headers */
   BIT(encoding);            /* Accept-Encoding please */
   BIT(tr_encoding);         /* Transfer-Encoding please */
   BIT(use_resume);

@@ -46,7 +46,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/include        \
               -I$(top_srcdir)/lib            \
               -I$(srcdir)
 
-bin_PROGRAMS = curl
+bin_PROGRAMS = curl-impersonate
 
 curlinfo_SOURCES = curlinfo.c
 noinst_PROGRAMS = curlinfo
@@ -79,18 +79,18 @@ if USE_UNITY
 curltool_unity.c: $(top_srcdir)/scripts/mk-unity.pl $(CURL_CFILES) $(curl_cfiles_gen) $(curlx_csrc)
 	@PERL@ $(top_srcdir)/scripts/mk-unity.pl --include $(CURL_CFILES) $(curl_cfiles_gen) $(curlx_csrc) > curltool_unity.c
 
-nodist_curl_SOURCES = curltool_unity.c
-curl_SOURCES =
+nodist_curl_impersonate_SOURCES = curltool_unity.c
+curl_impersonate_SOURCES =
 CLEANFILES += curltool_unity.c
 else
-curl_SOURCES = $(CURL_CFILES) $(CURL_HFILES) $(curl_cfiles_gen) $(curl_hfiles_gen) $(curlx_csrc) $(curlx_hsrc)
+curl_impersonate_SOURCES = $(CURL_CFILES) $(CURL_HFILES) $(curl_cfiles_gen) $(curl_hfiles_gen) $(curlx_csrc) $(curlx_hsrc)
 endif
 if HAVE_WINDRES
-curl_SOURCES += $(CURL_RCFILES)
+curl_impersonate_SOURCES += $(CURL_RCFILES)
 $(CURL_RCFILES): tool_version.h
 endif
 
-curl_LDFLAGS = $(CURL_LDFLAGS_BIN) $(UNICODEFLAG)
+curl_impersonate_LDFLAGS = $(CURL_LDFLAGS_BIN) $(UNICODEFLAG)
 
 # This might hold -Werror
 CFLAGS += @CURL_CFLAG_EXTRAS@
@@ -98,7 +98,7 @@ CFLAGS += @CURL_CFLAG_EXTRAS@
 # Prevent LIBS from being used for all link targets
 LIBS = $(BLANK_AT_MAKETIME)
 
-curl_LDADD = $(top_builddir)/lib/libcurl.la @LIBCURL_PC_LIBS_PRIVATE@
+curl_impersonate_LDADD = $(top_builddir)/lib/libcurl-impersonate.la @LIBCURL_PC_LIBS_PRIVATE@
 
 # if unit tests are enabled, build a static library to link them with
 if BUILD_UNITTESTS

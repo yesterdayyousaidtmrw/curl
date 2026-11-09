@@ -1613,7 +1613,11 @@ if test "x$OPT_BROTLI" != "xno"; then
   CPPFLAGS="$CPPFLAGS $CPP_BROTLI"
   LIBS="$LIB_BROTLI $LIBS"
 
-  AC_CHECK_LIB(brotlidec, BrotliDecoderDecompress)
+  AC_CHECK_LIB(brotlidec, BrotliDecoderDecompress,
+    # curl-impersonate: Define 'action-if-found' explicitly to prevent
+    # -lbrotlidec from being added to LIBS (already added before)
+    AC_DEFINE(HAVE_LIBBROTLI, 1, [Define to 1 if libbrotli exists])
+  )
 
   AC_CHECK_HEADERS(brotli/decode.h,
     curl_brotli_msg="enabled (libbrotlidec)"
@@ -5495,6 +5499,8 @@ SUPPORT_PROTOCOLS=`echo $SUPPORT_PROTOCOLS | tr ' ' '\012' | sort | tr '\012' ' 
 
 AC_SUBST(SUPPORT_PROTOCOLS)
 
+AC_CHECK_FUNCS([SSL_set_alps_use_new_codepoint])
+
 dnl squeeze whitespace out of some variables
 
 squeeze CFLAGS
@@ -5545,10 +5551,11 @@ AC_CONFIG_FILES([\
   projects/Makefile \
   projects/vms/Makefile
 ])
-AC_CONFIG_FILES([curl-config], [chmod +x curl-config])
-AC_CONFIG_FILES([libcurl.pc], [
+AC_CONFIG_FILES([curl-impersonate-config:curl-config.in],
+                [chmod +x curl-impersonate-config])
+AC_CONFIG_FILES([libcurl-impersonate.pc:libcurl.pc.in], [
   dnl strip trailing spaces, duplicate spaces after colon, empty properties
-  "$SED" -e 's/ *$//g' -e 's/^Libs\.private:  */Libs.private: /' -e '/^@<:@A-Za-z.@:>@*:$/d' libcurl.pc > libcurl.pc.tmp && mv libcurl.pc.tmp libcurl.pc
+  "$SED" -e 's/ *$//g' -e 's/^Libs\.private:  */Libs.private: /' -e '/^@<:@A-Za-z.@:>@*:$/d' libcurl-impersonate.pc > libcurl-impersonate.pc.tmp && mv libcurl-impersonate.pc.tmp libcurl-impersonate.pc
 ], [SED="$SED"])
 AC_OUTPUT
 
