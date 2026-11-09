@@ -1828,6 +1828,16 @@ static bool http_merged_user_agent_is_firefox(struct Curl_easy *data)
   return uagent && strstr(&uagent[10], "Firefox/") != NULL;
 }
 
+/* neo: with no internal Connection values to merge (TE, Upgrade,
+   HTTP2-Settings), a custom Connection header is sent in place among the
+   custom headers, so the caller controls its position (Chrome sends it 2nd).
+   Otherwise it is merged and sent last, as upstream does. */
+static bool http_connection_in_place(struct Curl_easy *data)
+{
+  return !data->state.http_hd_te && !data->state.http_hd_upgrade &&
+         !data->state.http_hd_h2_settings;
+}
+
 CURLcode Curl_add_custom_headers(struct Curl_easy *data,
                                  bool is_connect, int httpversion,
                                  struct dynbuf *req)
@@ -1942,7 +1952,8 @@ CURLcode Curl_add_custom_headers(struct Curl_easy *data,
                  we will force length zero then */
               curlx_str_casecompare(&name, "Content-Length"))
         ;
-      else if(curlx_str_casecompare(&name, "Connection"))
+      else if(curlx_str_casecompare(&name, "Connection") &&
+              !http_connection_in_place(data))
         /* Connection headers are handled specially */
         ;
       /* curl-impersonate: Firefox sends Priority on HTTP/1.x; omit it for
@@ -3255,6 +3266,9 @@ static CURLcode http_add_connection_hd(struct Curl_easy *data,
   CURLcode result = CURLE_OK;
   size_t rlen = curlx_dyn_len(req);
   bool skip;
+
+  if(http_connection_in_place(data))
+    return CURLE_OK; /* sent with the custom headers */
 
   /* Add the 1st custom "Connection: " header, if there is one */
   for(head = Curl_http_request_headers(data); head; head = head->next) {
